@@ -177,6 +177,8 @@ export default function MapScreen() {
   }
 
   const selectedCoordinate = selectedEvent?.coordinate ?? selectedAlert?.coordinate ?? null;
+  const cameraCenterCoordinate = selectedCoordinate ?? DEFAULT_CENTER;
+  const cameraZoomLevel = selectedCoordinate ? 14.6 : DEFAULT_ZOOM;
 
   const nearbyEvents = useMemo(() => {
     if (!selectedCoordinate) {
@@ -201,6 +203,9 @@ export default function MapScreen() {
             centerCoordinate: DEFAULT_CENTER,
             zoomLevel: DEFAULT_ZOOM,
           }}
+          centerCoordinate={cameraCenterCoordinate}
+          zoomLevel={cameraZoomLevel}
+          animationDuration={450}
           maxBounds={{
             sw: METRO_BOUNDS[0],
             ne: METRO_BOUNDS[1],
