@@ -112,6 +112,18 @@ export default function MapScreen() {
     setSheetLevel('peek');
   }
 
+  function resetMapExperience() {
+    setQuickFilter('all');
+    setAlertQuickFilter('all');
+    setSearchTerm('');
+    setShowAlerts(true);
+    closeDetails();
+  }
+
+  function recenterToMetro() {
+    closeDetails();
+  }
+
   function cycleSheetLevel() {
     if (sheetLevel === 'min') {
       setSheetLevel('peek');
@@ -308,6 +320,15 @@ export default function MapScreen() {
         <Pressable onPress={() => setShowAlerts(!showAlerts)} className="mb-2 rounded-md bg-gray-100 px-2 py-1">
           <Text className="text-xs text-foreground">{showAlerts ? 'Ocultar alertas' : 'Mostrar alertas'}</Text>
         </Pressable>
+
+        <View className="mb-2 flex-row gap-2">
+          <Pressable onPress={resetMapExperience} className="rounded-md bg-gray-100 px-2 py-1">
+            <Text className="text-xs text-foreground">Limpiar</Text>
+          </Pressable>
+          <Pressable onPress={recenterToMetro} className="rounded-md bg-gray-100 px-2 py-1">
+            <Text className="text-xs text-foreground">Centro</Text>
+          </Pressable>
+        </View>
 
         <Text className="text-xs text-foreground">Eventos: {filteredEvents.length}</Text>
         <Text className="text-xs text-foreground">Alertas: {showAlerts ? filteredAlerts.length : 0}</Text>
