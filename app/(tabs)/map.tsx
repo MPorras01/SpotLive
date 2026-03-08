@@ -18,22 +18,45 @@ export default function MapScreen() {
   const [acknowledgedAlertIds, setAcknowledgedAlertIds] = useState<string[]>([]);
   const [sharedEventIds, setSharedEventIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
 
   const searchTerm = useMapStore((state) => state.searchTerm);
   const showAlerts = useMapStore((state) => state.showAlerts);
   const setSearchTerm = useMapStore((state) => state.setSearchTerm);
   const setShowAlerts = useMapStore((state) => state.setShowAlerts);
 
-  useEffect(() => {
-    async function loadMapData() {
+  async function loadMapData(options?: { silent?: boolean }) {
+    const isSilent = options?.silent ?? false;
+
+    if (!isSilent) {
       setIsLoading(true);
+    }
+
+    try {
       const [eventsFeed, alertsFeed] = await Promise.all([getMobileEventsFeed(), getMobileAlertsFeed()]);
       setEvents(eventsFeed);
       setAlerts(alertsFeed);
-      setIsLoading(false);
+      setLoadError(null);
+      setLastSyncAt(new Date().toLocaleTimeString('es-CO'));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'No se pudo cargar el feed del mapa.';
+      setLoadError(message);
+    } finally {
+      if (!isSilent) {
+        setIsLoading(false);
+      }
     }
+  }
 
+  useEffect(() => {
     void loadMapData();
+
+    const refreshInterval = setInterval(() => {
+      void loadMapData({ silent: true });
+    }, 60_000);
+
+    return () => clearInterval(refreshInterval);
   }, []);
 
   const filteredEvents = useMemo(() => {
@@ -288,7 +311,18 @@ export default function MapScreen() {
 
         <Text className="text-xs text-foreground">Eventos: {filteredEvents.length}</Text>
         <Text className="text-xs text-foreground">Alertas: {showAlerts ? filteredAlerts.length : 0}</Text>
-        <Text className="text-xs text-muted">{isLoading ? 'Sincronizando...' : 'Datos sincronizados'}</Text>
+        <Text className="text-xs text-muted">
+          {isLoading ? 'Sincronizando...' : loadError ? 'Sync con errores' : `Sync OK ${lastSyncAt ? `(${lastSyncAt})` : ''}`}
+        </Text>
+
+        {loadError ? (
+          <View className="mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-2">
+            <Text className="text-xs text-red-700">{loadError}</Text>
+            <Pressable onPress={() => void loadMapData()} className="mt-2 self-start rounded-md bg-red-600 px-2 py-1">
+              <Text className="text-xs font-medium text-white">Reintentar</Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
 
       <View className="absolute bottom-4 left-4 right-4 rounded-md bg-white/95 px-3 py-2">
