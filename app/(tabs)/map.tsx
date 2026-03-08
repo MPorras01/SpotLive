@@ -163,6 +163,36 @@ export default function MapScreen() {
     closeDetails();
   }
 
+  function applyFocusMode(mode: 'hot' | 'closures' | 'followed' | 'reset') {
+    if (mode === 'hot') {
+      setQuickFilter('all');
+      setEventStatusQuickFilter('live');
+      setAlertQuickFilter('all');
+      setShowAlerts(true);
+      closeDetails();
+      return;
+    }
+
+    if (mode === 'closures') {
+      setQuickFilter('all');
+      setEventStatusQuickFilter('all');
+      setAlertQuickFilter('road_closure');
+      setShowAlerts(true);
+      closeDetails();
+      return;
+    }
+
+    if (mode === 'followed') {
+      setQuickFilter('all');
+      setEventStatusQuickFilter('followed');
+      setShowAlerts(true);
+      closeDetails();
+      return;
+    }
+
+    resetMapExperience();
+  }
+
   function cycleSheetLevel() {
     if (sheetLevel === 'min') {
       setSheetLevel('peek');
@@ -485,6 +515,25 @@ export default function MapScreen() {
             <Text className="text-xs text-muted">Todo bien: verde</Text>
           </View>
         </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
+          <View className="flex-row gap-2">
+            {[
+              { id: 'hot', label: 'Zona caliente' },
+              { id: 'closures', label: 'Solo cierres' },
+              { id: 'followed', label: 'Mis seguidos' },
+              { id: 'reset', label: 'Modo normal' },
+            ].map((item) => (
+              <Pressable
+                key={item.id}
+                onPress={() => applyFocusMode(item.id as 'hot' | 'closures' | 'followed' | 'reset')}
+                className="rounded-full bg-gray-100 px-3 py-1"
+              >
+                <Text className="text-xs font-medium text-foreground">{item.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
           <View className="flex-row gap-2">
