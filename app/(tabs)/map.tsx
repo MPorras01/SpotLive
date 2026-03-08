@@ -12,7 +12,7 @@ export default function MapScreen() {
   const [alerts, setAlerts] = useState<MobileAlertItem[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<MobileEventItem | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<MobileAlertItem | null>(null);
-  const [isExpandedSheet, setIsExpandedSheet] = useState(false);
+  const [sheetLevel, setSheetLevel] = useState<'min' | 'peek' | 'full'>('peek');
   const [quickFilter, setQuickFilter] = useState<'all' | 'live' | MobileEventItem['category']>('all');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,7 +55,21 @@ export default function MapScreen() {
   function closeDetails() {
     setSelectedEvent(null);
     setSelectedAlert(null);
-    setIsExpandedSheet(false);
+    setSheetLevel('peek');
+  }
+
+  function cycleSheetLevel() {
+    if (sheetLevel === 'min') {
+      setSheetLevel('peek');
+      return;
+    }
+
+    if (sheetLevel === 'peek') {
+      setSheetLevel('full');
+      return;
+    }
+
+    setSheetLevel('min');
   }
 
   function alertTypeLabel(type: MobileAlertItem['type']): string {
@@ -91,7 +105,7 @@ export default function MapScreen() {
             onSelected={() => {
               setSelectedAlert(null);
               setSelectedEvent(event);
-              setIsExpandedSheet(false);
+              setSheetLevel('peek');
             }}
           >
             <View className={`h-4 w-4 rounded-full border-2 border-white ${event.status === 'live' ? 'bg-secondary' : 'bg-primary'}`} />
@@ -107,7 +121,7 @@ export default function MapScreen() {
             onSelected={() => {
               setSelectedEvent(null);
               setSelectedAlert(alert);
-              setIsExpandedSheet(false);
+              setSheetLevel('peek');
             }}
           >
             <View className="h-3 w-3 rounded-full border border-white bg-red-500" />
@@ -164,7 +178,12 @@ export default function MapScreen() {
       </View>
 
       {selectedEvent || selectedAlert ? (
-        <View className={`absolute left-4 right-4 rounded-xl border border-gray-200 bg-white p-4 shadow ${isExpandedSheet ? 'bottom-4' : 'bottom-20'}`}>
+        <View
+          className={`absolute left-4 right-4 rounded-xl border border-gray-200 bg-white p-4 shadow ${sheetLevel === 'full' ? 'bottom-4' : 'bottom-20'}`}
+          style={{
+            minHeight: sheetLevel === 'min' ? 120 : sheetLevel === 'peek' ? 210 : 320,
+          }}
+        >
           <View className="flex-row items-start justify-between gap-3">
             <View className="flex-1">
               <Text className="text-base font-semibold text-foreground">{selectedEvent?.title ?? alertTypeLabel(selectedAlert!.type)}</Text>
@@ -175,16 +194,18 @@ export default function MapScreen() {
             </Pressable>
           </View>
 
-          <View className="mt-3 flex-row flex-wrap gap-2">
-            {selectedEvent ? <Text className="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700">{selectedEvent.status}</Text> : null}
-            {selectedEvent ? <Text className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">{selectedEvent.category}</Text> : null}
-            {selectedAlert ? <Text className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">{selectedAlert.type}</Text> : null}
-          </View>
+          {sheetLevel !== 'min' ? (
+            <View className="mt-3 flex-row flex-wrap gap-2">
+              {selectedEvent ? <Text className="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700">{selectedEvent.status}</Text> : null}
+              {selectedEvent ? <Text className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">{selectedEvent.category}</Text> : null}
+              {selectedAlert ? <Text className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">{selectedAlert.type}</Text> : null}
+            </View>
+          ) : null}
 
-          {selectedEvent ? <Text className="mt-3 text-xs text-muted">Inicio: {new Date(selectedEvent.startAt).toLocaleString('es-CO')}</Text> : null}
-          {selectedAlert ? <Text className="mt-3 text-xs text-muted">Reporte activo en esta zona.</Text> : null}
+          {sheetLevel !== 'min' && selectedEvent ? <Text className="mt-3 text-xs text-muted">Inicio: {new Date(selectedEvent.startAt).toLocaleString('es-CO')}</Text> : null}
+          {sheetLevel !== 'min' && selectedAlert ? <Text className="mt-3 text-xs text-muted">Reporte activo en esta zona.</Text> : null}
 
-          {isExpandedSheet ? (
+          {sheetLevel === 'full' ? (
             <View className="mt-3 rounded-md bg-gray-50 p-3">
               <Text className="text-xs text-muted">
                 {selectedEvent
@@ -195,8 +216,10 @@ export default function MapScreen() {
           ) : null}
 
           <View className="mt-3 flex-row gap-2">
-            <Pressable onPress={() => setIsExpandedSheet(!isExpandedSheet)} className="flex-1 items-center justify-center rounded-md bg-primary py-2">
-              <Text className="text-sm font-medium text-white">{isExpandedSheet ? 'Minimizar' : 'Expandir'}</Text>
+            <Pressable onPress={cycleSheetLevel} className="flex-1 items-center justify-center rounded-md bg-primary py-2">
+              <Text className="text-sm font-medium text-white">
+                {sheetLevel === 'min' ? 'Subir' : sheetLevel === 'peek' ? 'Expandir' : 'Compactar'}
+              </Text>
             </Pressable>
             <Pressable className="flex-1 items-center justify-center rounded-md bg-gray-900 py-2">
               <Text className="text-sm font-medium text-white">{selectedEvent ? 'Compartir' : 'Confirmar'}</Text>
