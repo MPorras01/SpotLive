@@ -20,6 +20,7 @@ export default function MapScreen() {
   const [sharedEventIds, setSharedEventIds] = useState<string[]>([]);
   const [followedEventIds, setFollowedEventIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTopPanelCollapsed, setIsTopPanelCollapsed] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
   const [lastSyncMs, setLastSyncMs] = useState<number | null>(null);
@@ -397,60 +398,77 @@ export default function MapScreen() {
       </MapView>
 
       <View className="absolute left-4 top-4 rounded-md bg-white/95 px-3 py-2">
-        <TextInput
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          placeholder="Buscar evento o lugar"
-          className="mb-2 rounded-md border border-gray-300 px-2 py-1 text-xs text-foreground"
-        />
-
-        <Pressable onPress={() => setShowAlerts(!showAlerts)} className="mb-2 rounded-md bg-gray-100 px-2 py-1">
-          <Text className="text-xs text-foreground">{showAlerts ? 'Ocultar alertas' : 'Mostrar alertas'}</Text>
-        </Pressable>
-
-        <View className="mb-2 flex-row gap-2">
-          <Pressable onPress={resetMapExperience} className="rounded-md bg-gray-100 px-2 py-1">
-            <Text className="text-xs text-foreground">Limpiar</Text>
-          </Pressable>
-          <Pressable onPress={recenterToMetro} className="rounded-md bg-gray-100 px-2 py-1">
-            <Text className="text-xs text-foreground">Centro</Text>
+        <View className="mb-2 flex-row items-center justify-between">
+          <Text className="text-xs font-semibold text-foreground">Control de mapa</Text>
+          <Pressable onPress={() => setIsTopPanelCollapsed((current) => !current)} className="rounded-md bg-gray-100 px-2 py-1">
+            <Text className="text-xs text-foreground">{isTopPanelCollapsed ? 'Expandir' : 'Compactar'}</Text>
           </Pressable>
         </View>
 
-        <Text className="text-xs text-foreground">Eventos: {filteredEvents.length}</Text>
-        <Text className="text-xs text-foreground">Seguidos: {followedEventsCount}</Text>
-        <Text className="text-xs text-foreground">Alertas: {showAlerts ? filteredAlerts.length : 0}</Text>
-        <Text className="text-xs text-muted">
-          {isLoading ? 'Sincronizando...' : loadError ? 'Sync con errores' : `Sync OK ${lastSyncAt ? `(${lastSyncAt})` : ''}`}
-        </Text>
-
-        <Pressable onPress={() => void loadMapData()} className="mt-2 self-start rounded-md bg-slate-700 px-2 py-1">
-          <Text className="text-xs font-medium text-white">Actualizar ahora</Text>
-        </Pressable>
-
-        {isSyncStale && !loadError ? (
-          <View className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-2">
-            <Text className="text-xs text-amber-800">Feed desactualizado, intenta refrescar.</Text>
+        {isTopPanelCollapsed ? (
+          <View>
+            <Text className="text-xs text-foreground">
+              E: {filteredEvents.length} | S: {followedEventsCount} | A: {showAlerts ? filteredAlerts.length : 0}
+            </Text>
           </View>
-        ) : null}
+        ) : (
+          <View>
+            <TextInput
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              placeholder="Buscar evento o lugar"
+              className="mb-2 rounded-md border border-gray-300 px-2 py-1 text-xs text-foreground"
+            />
 
-        {hasActiveFilters ? (
-          <View className="mt-2 rounded-md bg-slate-100 px-2 py-2">
-            <Text className="text-xs text-slate-700">Filtros activos en mapa</Text>
-            <Pressable onPress={resetMapExperience} className="mt-2 self-start rounded-md bg-slate-800 px-2 py-1">
-              <Text className="text-xs font-medium text-white">Limpiar todo</Text>
+            <Pressable onPress={() => setShowAlerts(!showAlerts)} className="mb-2 rounded-md bg-gray-100 px-2 py-1">
+              <Text className="text-xs text-foreground">{showAlerts ? 'Ocultar alertas' : 'Mostrar alertas'}</Text>
             </Pressable>
-          </View>
-        ) : null}
 
-        {loadError ? (
-          <View className="mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-2">
-            <Text className="text-xs text-red-700">{loadError}</Text>
-            <Pressable onPress={() => void loadMapData()} className="mt-2 self-start rounded-md bg-red-600 px-2 py-1">
-              <Text className="text-xs font-medium text-white">Reintentar</Text>
+            <View className="mb-2 flex-row gap-2">
+              <Pressable onPress={resetMapExperience} className="rounded-md bg-gray-100 px-2 py-1">
+                <Text className="text-xs text-foreground">Limpiar</Text>
+              </Pressable>
+              <Pressable onPress={recenterToMetro} className="rounded-md bg-gray-100 px-2 py-1">
+                <Text className="text-xs text-foreground">Centro</Text>
+              </Pressable>
+            </View>
+
+            <Text className="text-xs text-foreground">Eventos: {filteredEvents.length}</Text>
+            <Text className="text-xs text-foreground">Seguidos: {followedEventsCount}</Text>
+            <Text className="text-xs text-foreground">Alertas: {showAlerts ? filteredAlerts.length : 0}</Text>
+            <Text className="text-xs text-muted">
+              {isLoading ? 'Sincronizando...' : loadError ? 'Sync con errores' : `Sync OK ${lastSyncAt ? `(${lastSyncAt})` : ''}`}
+            </Text>
+
+            <Pressable onPress={() => void loadMapData()} className="mt-2 self-start rounded-md bg-slate-700 px-2 py-1">
+              <Text className="text-xs font-medium text-white">Actualizar ahora</Text>
             </Pressable>
+
+            {isSyncStale && !loadError ? (
+              <View className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-2">
+                <Text className="text-xs text-amber-800">Feed desactualizado, intenta refrescar.</Text>
+              </View>
+            ) : null}
+
+            {hasActiveFilters ? (
+              <View className="mt-2 rounded-md bg-slate-100 px-2 py-2">
+                <Text className="text-xs text-slate-700">Filtros activos en mapa</Text>
+                <Pressable onPress={resetMapExperience} className="mt-2 self-start rounded-md bg-slate-800 px-2 py-1">
+                  <Text className="text-xs font-medium text-white">Limpiar todo</Text>
+                </Pressable>
+              </View>
+            ) : null}
+
+            {loadError ? (
+              <View className="mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-2">
+                <Text className="text-xs text-red-700">{loadError}</Text>
+                <Pressable onPress={() => void loadMapData()} className="mt-2 self-start rounded-md bg-red-600 px-2 py-1">
+                  <Text className="text-xs font-medium text-white">Reintentar</Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
-        ) : null}
+        )}
       </View>
 
       <View className="absolute bottom-4 left-4 right-4 rounded-md bg-white/95 px-3 py-2">
