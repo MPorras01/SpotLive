@@ -160,6 +160,39 @@ export default function MapScreen() {
     }
   }
 
+  function distanceInKm(from: [number, number], to: [number, number]): number {
+    const toRad = (degrees: number) => (degrees * Math.PI) / 180;
+    const earthKm = 6371;
+    const [fromLng, fromLat] = from;
+    const [toLng, toLat] = to;
+    const dLat = toRad(toLat - fromLat);
+    const dLng = toRad(toLng - fromLng);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(fromLat)) * Math.cos(toRad(toLat)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return earthKm * c;
+  }
+
+  const selectedCoordinate = selectedEvent?.coordinate ?? selectedAlert?.coordinate ?? null;
+
+  const nearbyEvents = useMemo(() => {
+    if (!selectedCoordinate) {
+      return [];
+    }
+
+    return filteredEvents
+      .filter((event) => event.id !== selectedEvent?.id)
+      .map((event) => ({
+        event,
+        distanceKm: distanceInKm(selectedCoordinate, event.coordinate),
+      }))
+      .sort((a, b) => a.distanceKm - b.distanceKm)
+      .slice(0, 3);
+  }, [filteredEvents, selectedCoordinate, selectedEvent?.id]);
+
   return (
     <View className="flex-1 bg-background">
       <MapView mapStyle={TILE_URL} style={{ flex: 1 }} compassEnabled logoEnabled>
@@ -309,6 +342,30 @@ export default function MapScreen() {
                   <Text className="mt-1 text-xs text-rose-700">
                     Confirmacion comunitaria: {acknowledgedAlertIds.includes(selectedAlert.id) ? 'Validada por ti' : 'Pendiente'}
                   </Text>
+                </View>
+              ) : null}
+
+              {nearbyEvents.length > 0 ? (
+                <View className="rounded-md bg-sky-50 p-3">
+                  <Text className="text-xs font-semibold text-sky-900">Eventos cerca</Text>
+                  <View className="mt-2 gap-2">
+                    {nearbyEvents.map(({ event, distanceKm }) => (
+                      <Pressable
+                        key={event.id}
+                        onPress={() => {
+                          setSelectedAlert(null);
+                          setSelectedEvent(event);
+                          setSheetLevel('peek');
+                        }}
+                        className="rounded-md border border-sky-100 bg-white px-2 py-2"
+                      >
+                        <Text className="text-xs font-semibold text-sky-900">{event.title}</Text>
+                        <Text className="mt-1 text-xs text-sky-700">
+                          {categoryLabel(event.category)} · {statusLabel(event.status)} · {distanceKm.toFixed(2)} km
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 </View>
               ) : null}
             </View>
