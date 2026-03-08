@@ -1,93 +1,260 @@
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+:root {
+  --background: #f9fafb;
+  --foreground: #111827;
+}
+
+* {
+  @apply border-gray-200;
+}
+
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  @apply bg-background text-foreground;
+}
+
+.spot-map-shell {
+  --spot-color-primary: #f97316;
+  --spot-color-secondary: #4b7be5;
+  --spot-color-bg: #0f0f0f;
+  --spot-color-surface: #1a1a1a;
+  --spot-color-surface-2: #242424;
+  --spot-color-border: #2e2e2e;
+  --spot-color-text: #f9fafb;
+  --spot-color-muted: #9ca3af;
+  --spot-color-live: #ef4444;
+  --spot-color-success: #22c55e;
+  color: var(--spot-color-text);
+  background: #0f0f0f;
+}
+
+.spot-map-fallback {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.12) 0%, rgba(15, 15, 15, 0) 42%),
+    radial-gradient(circle at 85% 30%, rgba(249, 115, 22, 0.14) 0%, rgba(15, 15, 15, 0) 46%),
+    linear-gradient(180deg, #0f0f0f 0%, #101317 100%);
+}
+
+.spot-map-shell .maplibregl-map,
+.spot-map-shell .maplibregl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.spot-floating-panel {
+  background: rgba(15, 15, 15, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+.spot-floating-input {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 15, 15, 0.85);
+  backdrop-filter: blur(12px);
+  color: var(--spot-color-text);
+  font-size: 14px;
+  padding: 0.72rem 0.9rem;
+}
+
+.spot-floating-input::placeholder {
+  color: var(--spot-color-muted);
+}
+
+.spot-circle-btn {
+  display: inline-flex;
+  height: 42px;
+  width: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 15, 15, 0.85);
+  color: var(--spot-color-text);
+  backdrop-filter: blur(12px);
+}
+
+.spot-fab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: var(--spot-color-primary);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 16px 28px rgba(249, 115, 22, 0.35);
+}
+
+.spot-filter-chip {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 15, 15, 0.72);
+  color: var(--spot-color-text);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0.45rem 0.8rem;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.spot-filter-chip-active {
+  background: rgba(249, 115, 22, 0.95);
+  transform: scale(1.03);
+  animation: spot-chip-bounce 220ms ease;
+}
+
+.spot-event-pin-live,
+.spot-event-pin-upcoming,
+.spot-place-pin {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 200ms ease;
+}
+
+.spot-event-pin-live {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: #f97316;
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.7);
+}
+
+.spot-event-pin-live:hover {
+  width: 56px;
+  height: 56px;
+}
+
+.spot-event-pin-upcoming {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #4b7be5;
+}
+
+.spot-place-pin {
+  width: 36px;
+  height: 36px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #6b7280;
+}
+
+.spot-place-pin span {
+  transform: rotate(45deg);
+}
+
+.spot-pin-tap:active {
+  animation: spot-pin-tap 200ms ease;
+}
+
+.spot-live-ping {
+  position: absolute;
+  inset: -2px;
+  border-radius: 999px;
+  background: rgba(249, 115, 22, 0.36);
+  animation: spot-ping 1.5s infinite;
+}
+
+.spot-alert-chip {
+  display: inline-flex;
+  max-width: 240px;
+  align-items: center;
+  gap: 0.45rem;
+  border-left: 4px solid transparent;
+  border-radius: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.42rem 0.55rem;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  animation: spot-alert-enter 200ms ease-out;
+}
+
+.spot-alert-chip-pulse {
+  box-shadow: 0 0 14px rgba(249, 115, 22, 0.35);
+}
+
+.spot-alert-chip-expiring {
+  animation: spot-alert-expire 500ms ease-in forwards;
+}
+
+.spot-action-btn {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.6rem 0.45rem;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@keyframes spot-ping {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
   }
 }
 
-@layer base {
-  :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.58 0.22 27);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.809 0.105 251.813);
-    --chart-2: oklch(0.623 0.214 259.815);
-    --chart-3: oklch(0.546 0.245 262.881);
-    --chart-4: oklch(0.488 0.243 264.376);
-    --chart-5: oklch(0.424 0.199 265.638);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+@keyframes spot-pin-tap {
+  0% {
+    transform: scale(1);
   }
-  .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.87 0.00 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.371 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.809 0.105 251.813);
-    --chart-2: oklch(0.623 0.214 259.815);
-    --chart-3: oklch(0.546 0.245 262.881);
-    --chart-4: oklch(0.488 0.243 264.376);
-    --chart-5: oklch(0.424 0.199 265.638);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+  40% {
+    transform: scale(0.9);
   }
-  .theme {
-    --font-sans: var(--font-sans);
+  70% {
+    transform: scale(1.1);
   }
-  * {
-    @apply border-border outline-ring/50;
+  100% {
+    transform: scale(1);
   }
-  body {
-    @apply bg-background text-foreground;
+}
+
+@keyframes spot-alert-enter {
+  from {
+    opacity: 0;
+    transform: scale(0);
   }
-  html {
-    @apply font-sans;
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spot-alert-expire {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes spot-chip-bounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1.03);
   }
 }
