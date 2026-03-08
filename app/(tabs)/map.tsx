@@ -14,6 +14,7 @@ export default function MapScreen() {
   const [selectedAlert, setSelectedAlert] = useState<MobileAlertItem | null>(null);
   const [sheetLevel, setSheetLevel] = useState<'min' | 'peek' | 'full'>('peek');
   const [quickFilter, setQuickFilter] = useState<'all' | 'live' | MobileEventItem['category']>('all');
+  const [alertQuickFilter, setAlertQuickFilter] = useState<'all' | MobileAlertItem['type']>('all');
   const [acknowledgedAlertIds, setAcknowledgedAlertIds] = useState<string[]>([]);
   const [sharedEventIds, setSharedEventIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,6 +54,34 @@ export default function MapScreen() {
       return event.title.toLowerCase().includes(normalizedSearch) || event.placeName.toLowerCase().includes(normalizedSearch);
     });
   }, [events, quickFilter, searchTerm]);
+
+  const filteredAlerts = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return alerts.filter((alert) => {
+      if (alertQuickFilter !== 'all' && alert.type !== alertQuickFilter) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return alert.message.toLowerCase().includes(normalizedSearch) || alertTypeLabel(alert.type).toLowerCase().includes(normalizedSearch);
+    });
+  }, [alerts, alertQuickFilter, searchTerm]);
+
+  useEffect(() => {
+    if (!selectedAlert) {
+      return;
+    }
+
+    const alertStillVisible = filteredAlerts.some((alert) => alert.id === selectedAlert.id);
+    if (!alertStillVisible) {
+      setSelectedAlert(null);
+      setSheetLevel('peek');
+    }
+  }, [filteredAlerts, selectedAlert]);
 
   function closeDetails() {
     setSelectedEvent(null);
@@ -228,7 +257,7 @@ export default function MapScreen() {
         ))}
 
         {showAlerts
-          ? alerts.map((alert) => (
+          ? filteredAlerts.map((alert) => (
           <PointAnnotation
             key={alert.id}
             id={alert.id}
@@ -258,7 +287,7 @@ export default function MapScreen() {
         </Pressable>
 
         <Text className="text-xs text-foreground">Eventos: {filteredEvents.length}</Text>
-        <Text className="text-xs text-foreground">Alertas: {showAlerts ? alerts.length : 0}</Text>
+        <Text className="text-xs text-foreground">Alertas: {showAlerts ? filteredAlerts.length : 0}</Text>
         <Text className="text-xs text-muted">{isLoading ? 'Sincronizando...' : 'Datos sincronizados'}</Text>
       </View>
 
@@ -283,6 +312,28 @@ export default function MapScreen() {
                   key={item.id}
                   onPress={() => setQuickFilter(item.id as 'all' | 'live' | MobileEventItem['category'])}
                   className={`rounded-full px-3 py-1 ${active ? 'bg-primary' : 'bg-gray-100'}`}
+                >
+                  <Text className={`text-xs font-medium ${active ? 'text-white' : 'text-foreground'}`}>{item.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </ScrollView>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
+          <View className="flex-row gap-2">
+            {[
+              { id: 'all', label: 'Alertas: Todas' },
+              { id: 'road_closure', label: 'Cierres' },
+              { id: 'parking_full', label: 'Parqueo' },
+              { id: 'all_clear', label: 'Todo bien' },
+            ].map((item) => {
+              const active = alertQuickFilter === item.id;
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => setAlertQuickFilter(item.id as 'all' | MobileAlertItem['type'])}
+                  className={`rounded-full px-3 py-1 ${active ? 'bg-secondary' : 'bg-gray-100'}`}
                 >
                   <Text className={`text-xs font-medium ${active ? 'text-white' : 'text-foreground'}`}>{item.label}</Text>
                 </Pressable>
