@@ -14,6 +14,8 @@ export default function MapScreen() {
   const [selectedAlert, setSelectedAlert] = useState<MobileAlertItem | null>(null);
   const [sheetLevel, setSheetLevel] = useState<'min' | 'peek' | 'full'>('peek');
   const [quickFilter, setQuickFilter] = useState<'all' | 'live' | MobileEventItem['category']>('all');
+  const [acknowledgedAlertIds, setAcknowledgedAlertIds] = useState<string[]>([]);
+  const [sharedEventIds, setSharedEventIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const searchTerm = useMapStore((state) => state.searchTerm);
@@ -81,6 +83,81 @@ export default function MapScreen() {
     }
 
     return 'Todo bien';
+  }
+
+  function categoryLabel(category: MobileEventItem['category']): string {
+    if (category === 'music') return 'Musica';
+    if (category === 'party') return 'Fiesta';
+    if (category === 'sports') return 'Skate';
+    if (category === 'art') return 'Arte';
+    if (category === 'market') return 'Mercado';
+    if (category === 'food') return 'Parche';
+    return 'Otro';
+  }
+
+  function statusLabel(status: MobileEventItem['status']): string {
+    if (status === 'live') return 'En vivo';
+    if (status === 'approved') return 'Aprobado';
+    if (status === 'pending') return 'Pendiente';
+    if (status === 'finished') return 'Finalizado';
+    return 'Rechazado';
+  }
+
+  function minutesToStart(startAt: string): number {
+    return Math.round((new Date(startAt).getTime() - Date.now()) / 60_000);
+  }
+
+  function eventTimingText(startAt: string): string {
+    const delta = minutesToStart(startAt);
+
+    if (delta > 0) {
+      return `Empieza en ${delta} min`;
+    }
+
+    if (delta > -180) {
+      return `Activo hace ${Math.abs(delta)} min`;
+    }
+
+    return 'Evento fuera de ventana activa';
+  }
+
+  function eventAudienceTags(event: MobileEventItem): string[] {
+    if (event.category === 'party') {
+      return ['Adultos', 'Alto volumen'];
+    }
+
+    if (event.category === 'sports') {
+      return ['Outdoor', 'Bici/Skate'];
+    }
+
+    if (event.category === 'food' || event.category === 'market') {
+      return ['Familiar', 'Pet friendly'];
+    }
+
+    return ['Ambiente mixto', 'Acceso general'];
+  }
+
+  function alertSeverityLabel(alertType: MobileAlertItem['type']): 'Alta' | 'Media' | 'Informativa' {
+    if (alertType === 'road_closure') {
+      return 'Alta';
+    }
+
+    if (alertType === 'parking_full') {
+      return 'Media';
+    }
+
+    return 'Informativa';
+  }
+
+  function handleContextAction() {
+    if (selectedEvent) {
+      setSharedEventIds((current) => (current.includes(selectedEvent.id) ? current : [...current, selectedEvent.id]));
+      return;
+    }
+
+    if (selectedAlert) {
+      setAcknowledgedAlertIds((current) => (current.includes(selectedAlert.id) ? current : [...current, selectedAlert.id]));
+    }
   }
 
   return (
@@ -206,12 +283,34 @@ export default function MapScreen() {
           {sheetLevel !== 'min' && selectedAlert ? <Text className="mt-3 text-xs text-muted">Reporte activo en esta zona.</Text> : null}
 
           {sheetLevel === 'full' ? (
-            <View className="mt-3 rounded-md bg-gray-50 p-3">
-              <Text className="text-xs text-muted">
-                {selectedEvent
-                  ? 'Detalle extendido: aqui iremos mostrando etiquetas de ambiente, comentarios y alertas relacionadas.'
-                  : 'Detalle extendido de alerta: aqui se mostrara historial, vigencia y confirmaciones de usuarios.'}
-              </Text>
+            <View className="mt-3 gap-2">
+              {selectedEvent ? (
+                <View className="rounded-md bg-gray-50 p-3">
+                  <Text className="text-xs font-semibold text-foreground">Contexto rapido</Text>
+                  <Text className="mt-1 text-xs text-muted">{eventTimingText(selectedEvent.startAt)}</Text>
+                  <Text className="mt-1 text-xs text-muted">Estado: {statusLabel(selectedEvent.status)}</Text>
+                  <Text className="mt-1 text-xs text-muted">Categoria: {categoryLabel(selectedEvent.category)}</Text>
+
+                  <View className="mt-2 flex-row flex-wrap gap-2">
+                    {eventAudienceTags(selectedEvent).map((tag) => (
+                      <Text key={tag} className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
+                        {tag}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+
+              {selectedAlert ? (
+                <View className="rounded-md bg-rose-50 p-3">
+                  <Text className="text-xs font-semibold text-rose-800">Alerta en campo</Text>
+                  <Text className="mt-1 text-xs text-rose-700">Severidad: {alertSeverityLabel(selectedAlert.type)}</Text>
+                  <Text className="mt-1 text-xs text-rose-700">Mensaje: {selectedAlert.message}</Text>
+                  <Text className="mt-1 text-xs text-rose-700">
+                    Confirmacion comunitaria: {acknowledgedAlertIds.includes(selectedAlert.id) ? 'Validada por ti' : 'Pendiente'}
+                  </Text>
+                </View>
+              ) : null}
             </View>
           ) : null}
 
@@ -221,8 +320,16 @@ export default function MapScreen() {
                 {sheetLevel === 'min' ? 'Subir' : sheetLevel === 'peek' ? 'Expandir' : 'Compactar'}
               </Text>
             </Pressable>
-            <Pressable className="flex-1 items-center justify-center rounded-md bg-gray-900 py-2">
-              <Text className="text-sm font-medium text-white">{selectedEvent ? 'Compartir' : 'Confirmar'}</Text>
+            <Pressable onPress={handleContextAction} className="flex-1 items-center justify-center rounded-md bg-gray-900 py-2">
+              <Text className="text-sm font-medium text-white">
+                {selectedEvent
+                  ? sharedEventIds.includes(selectedEvent.id)
+                    ? 'Compartido'
+                    : 'Compartir'
+                  : selectedAlert && acknowledgedAlertIds.includes(selectedAlert.id)
+                    ? 'Confirmada'
+                    : 'Confirmar'}
+              </Text>
             </Pressable>
           </View>
         </View>
