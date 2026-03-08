@@ -124,6 +124,18 @@ export default function MapScreen() {
     }
   }, [filteredAlerts, selectedAlert]);
 
+  useEffect(() => {
+    if (!selectedEvent) {
+      return;
+    }
+
+    const eventStillVisible = filteredEvents.some((event) => event.id === selectedEvent.id);
+    if (!eventStillVisible) {
+      setSelectedEvent(null);
+      setSheetLevel('peek');
+    }
+  }, [filteredEvents, selectedEvent]);
+
   function closeDetails() {
     setSelectedEvent(null);
     setSelectedAlert(null);
@@ -278,6 +290,9 @@ export default function MapScreen() {
       .slice(0, 3);
   }, [filteredEvents, selectedCoordinate, selectedEvent?.id]);
 
+  const hasActiveFilters =
+    quickFilter !== 'all' || eventStatusQuickFilter !== 'all' || alertQuickFilter !== 'all' || searchTerm.trim().length > 0;
+
   return (
     <View className="flex-1 bg-background">
       <MapView mapStyle={TILE_URL} style={{ flex: 1 }} compassEnabled logoEnabled>
@@ -354,6 +369,15 @@ export default function MapScreen() {
         <Text className="text-xs text-muted">
           {isLoading ? 'Sincronizando...' : loadError ? 'Sync con errores' : `Sync OK ${lastSyncAt ? `(${lastSyncAt})` : ''}`}
         </Text>
+
+        {hasActiveFilters ? (
+          <View className="mt-2 rounded-md bg-slate-100 px-2 py-2">
+            <Text className="text-xs text-slate-700">Filtros activos en mapa</Text>
+            <Pressable onPress={resetMapExperience} className="mt-2 self-start rounded-md bg-slate-800 px-2 py-1">
+              <Text className="text-xs font-medium text-white">Limpiar todo</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         {loadError ? (
           <View className="mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-2">
