@@ -14,6 +14,7 @@ export default function MapScreen() {
   const [selectedAlert, setSelectedAlert] = useState<MobileAlertItem | null>(null);
   const [sheetLevel, setSheetLevel] = useState<'min' | 'peek' | 'full'>('peek');
   const [quickFilter, setQuickFilter] = useState<'all' | 'live' | MobileEventItem['category']>('all');
+  const [eventStatusQuickFilter, setEventStatusQuickFilter] = useState<'all' | 'live' | 'upcoming' | 'pending'>('all');
   const [alertQuickFilter, setAlertQuickFilter] = useState<'all' | MobileAlertItem['type']>('all');
   const [acknowledgedAlertIds, setAcknowledgedAlertIds] = useState<string[]>([]);
   const [sharedEventIds, setSharedEventIds] = useState<string[]>([]);
@@ -60,7 +61,9 @@ export default function MapScreen() {
   }, []);
 
   const filteredEvents = useMemo(() => {
+    const now = Date.now();
     const normalizedSearch = searchTerm.trim().toLowerCase();
+
     return events.filter((event) => {
       if (quickFilter === 'live' && event.status !== 'live') {
         return false;
@@ -70,13 +73,28 @@ export default function MapScreen() {
         return false;
       }
 
+      if (eventStatusQuickFilter === 'live' && event.status !== 'live') {
+        return false;
+      }
+
+      if (eventStatusQuickFilter === 'pending' && event.status !== 'pending') {
+        return false;
+      }
+
+      if (eventStatusQuickFilter === 'upcoming') {
+        const isUpcoming = new Date(event.startAt).getTime() > now;
+        if (!isUpcoming || event.status === 'rejected' || event.status === 'finished') {
+          return false;
+        }
+      }
+
       if (!normalizedSearch) {
         return true;
       }
 
       return event.title.toLowerCase().includes(normalizedSearch) || event.placeName.toLowerCase().includes(normalizedSearch);
     });
-  }, [events, quickFilter, searchTerm]);
+  }, [eventStatusQuickFilter, events, quickFilter, searchTerm]);
 
   const filteredAlerts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -114,6 +132,7 @@ export default function MapScreen() {
 
   function resetMapExperience() {
     setQuickFilter('all');
+    setEventStatusQuickFilter('all');
     setAlertQuickFilter('all');
     setSearchTerm('');
     setShowAlerts(true);
@@ -378,6 +397,28 @@ export default function MapScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
           <View className="flex-row gap-2">
             {[
+              { id: 'all', label: 'Estado: Todos' },
+              { id: 'live', label: 'Activos' },
+              { id: 'upcoming', label: 'Proximos' },
+              { id: 'pending', label: 'Pendientes' },
+            ].map((item) => {
+              const active = eventStatusQuickFilter === item.id;
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => setEventStatusQuickFilter(item.id as 'all' | 'live' | 'upcoming' | 'pending')}
+                  className={`rounded-full px-3 py-1 ${active ? 'bg-emerald-600' : 'bg-gray-100'}`}
+                >
+                  <Text className={`text-xs font-medium ${active ? 'text-white' : 'text-foreground'}`}>{item.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </ScrollView>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
+          <View className="flex-row gap-2">
+            {[
               { id: 'all', label: 'Alertas: Todas' },
               { id: 'road_closure', label: 'Cierres' },
               { id: 'parking_full', label: 'Parqueo' },
@@ -397,6 +438,15 @@ export default function MapScreen() {
           </View>
         </ScrollView>
       </View>
+
+      {filteredEvents.length === 0 && !isLoading ? (
+        <View className="absolute bottom-44 left-4 right-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+          <Text className="text-xs font-medium text-amber-900">No hay eventos con estos filtros.</Text>
+          <Pressable onPress={resetMapExperience} className="mt-2 self-start rounded-md bg-amber-500 px-2 py-1">
+            <Text className="text-xs font-medium text-white">Restaurar vista</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {selectedEvent || selectedAlert ? (
         <View
