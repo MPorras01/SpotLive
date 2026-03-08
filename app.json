@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "SpotLive",
+    "slug": "spotlive",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,9 +12,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "co.spotlive.app"
     },
     "android": {
+      "package": "co.spotlive.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -23,6 +25,8 @@
       },
       "predictiveBackGestureEnabled": false
     },
+    "scheme": "spotlive",
+    "plugins": ["expo-router"],
     "web": {
       "favicon": "./assets/favicon.png"
     }
