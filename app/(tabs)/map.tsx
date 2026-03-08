@@ -22,6 +22,7 @@ export default function MapScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  const [lastSyncMs, setLastSyncMs] = useState<number | null>(null);
 
   const searchTerm = useMapStore((state) => state.searchTerm);
   const showAlerts = useMapStore((state) => state.showAlerts);
@@ -40,6 +41,7 @@ export default function MapScreen() {
       setEvents(eventsFeed);
       setAlerts(alertsFeed);
       setLoadError(null);
+      setLastSyncMs(Date.now());
       setLastSyncAt(new Date().toLocaleTimeString('es-CO'));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'No se pudo cargar el feed del mapa.';
@@ -339,6 +341,7 @@ export default function MapScreen() {
 
   const hasActiveFilters =
     quickFilter !== 'all' || eventStatusQuickFilter !== 'all' || alertQuickFilter !== 'all' || searchTerm.trim().length > 0;
+  const isSyncStale = lastSyncMs !== null && Date.now() - lastSyncMs > 2 * 60_000;
   const liveEventsCount = filteredEvents.filter((event) => event.status === 'live').length;
   const highAlertCount = filteredAlerts.filter((alert) => alert.type === 'road_closure').length;
   const followedEventsCount = followedEventIds.length;
@@ -420,6 +423,16 @@ export default function MapScreen() {
         <Text className="text-xs text-muted">
           {isLoading ? 'Sincronizando...' : loadError ? 'Sync con errores' : `Sync OK ${lastSyncAt ? `(${lastSyncAt})` : ''}`}
         </Text>
+
+        <Pressable onPress={() => void loadMapData()} className="mt-2 self-start rounded-md bg-slate-700 px-2 py-1">
+          <Text className="text-xs font-medium text-white">Actualizar ahora</Text>
+        </Pressable>
+
+        {isSyncStale && !loadError ? (
+          <View className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-2">
+            <Text className="text-xs text-amber-800">Feed desactualizado, intenta refrescar.</Text>
+          </View>
+        ) : null}
 
         {hasActiveFilters ? (
           <View className="mt-2 rounded-md bg-slate-100 px-2 py-2">
