@@ -198,6 +198,38 @@ export default function MapScreen() {
     return 'Rechazado';
   }
 
+  function eventMarkerClass(event: MobileEventItem, isSelected: boolean): string {
+    if (isSelected) {
+      return 'h-5 w-5 rounded-full border-2 border-white bg-black';
+    }
+
+    if (event.status === 'live') {
+      return 'h-4 w-4 rounded-full border-2 border-white bg-secondary';
+    }
+
+    if (event.status === 'pending') {
+      return 'h-4 w-4 rounded-full border-2 border-white bg-amber-500';
+    }
+
+    return 'h-4 w-4 rounded-full border-2 border-white bg-primary';
+  }
+
+  function alertMarkerClass(alert: MobileAlertItem, isSelected: boolean): string {
+    if (isSelected) {
+      return 'h-4 w-4 rounded-full border-2 border-white bg-black';
+    }
+
+    if (alert.type === 'road_closure') {
+      return 'h-3 w-3 rounded-full border border-white bg-red-500';
+    }
+
+    if (alert.type === 'parking_full') {
+      return 'h-3 w-3 rounded-full border border-white bg-orange-500';
+    }
+
+    return 'h-3 w-3 rounded-full border border-white bg-emerald-500';
+  }
+
   function minutesToStart(startAt: string): number {
     return Math.round((new Date(startAt).getTime() - Date.now()) / 60_000);
   }
@@ -292,6 +324,8 @@ export default function MapScreen() {
 
   const hasActiveFilters =
     quickFilter !== 'all' || eventStatusQuickFilter !== 'all' || alertQuickFilter !== 'all' || searchTerm.trim().length > 0;
+  const liveEventsCount = filteredEvents.filter((event) => event.status === 'live').length;
+  const highAlertCount = filteredAlerts.filter((alert) => alert.type === 'road_closure').length;
 
   return (
     <View className="flex-1 bg-background">
@@ -321,7 +355,7 @@ export default function MapScreen() {
               setSheetLevel('peek');
             }}
           >
-            <View className={`h-4 w-4 rounded-full border-2 border-white ${event.status === 'live' ? 'bg-secondary' : 'bg-primary'}`} />
+            <View className={eventMarkerClass(event, selectedEvent?.id === event.id)} />
           </PointAnnotation>
         ))}
 
@@ -337,7 +371,7 @@ export default function MapScreen() {
               setSheetLevel('peek');
             }}
           >
-            <View className="h-3 w-3 rounded-full border border-white bg-red-500" />
+            <View className={alertMarkerClass(alert, selectedAlert?.id === alert.id)} />
           </PointAnnotation>
             ))
           : null}
@@ -391,6 +425,18 @@ export default function MapScreen() {
 
       <View className="absolute bottom-4 left-4 right-4 rounded-md bg-white/95 px-3 py-2">
         <Text className="text-xs text-muted">Area limitada a Medellin y su zona metropolitana.</Text>
+
+        <View className="mt-2 rounded-md bg-gray-100 px-2 py-2">
+          <Text className="text-xs font-semibold text-foreground">Leyenda</Text>
+          <Text className="mt-1 text-xs text-muted">Eventos en vivo: {liveEventsCount}</Text>
+          <Text className="text-xs text-muted">Alertas criticas (cierres): {highAlertCount}</Text>
+          <View className="mt-2 flex-row flex-wrap gap-2">
+            <Text className="text-xs text-muted">Evento activo: naranja</Text>
+            <Text className="text-xs text-muted">Evento pendiente: ambar</Text>
+            <Text className="text-xs text-muted">Cierre vial: rojo</Text>
+            <Text className="text-xs text-muted">Todo bien: verde</Text>
+          </View>
+        </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
           <View className="flex-row gap-2">
