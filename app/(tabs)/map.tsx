@@ -14,10 +14,11 @@ export default function MapScreen() {
   const [selectedAlert, setSelectedAlert] = useState<MobileAlertItem | null>(null);
   const [sheetLevel, setSheetLevel] = useState<'min' | 'peek' | 'full'>('peek');
   const [quickFilter, setQuickFilter] = useState<'all' | 'live' | MobileEventItem['category']>('all');
-  const [eventStatusQuickFilter, setEventStatusQuickFilter] = useState<'all' | 'live' | 'upcoming' | 'pending'>('all');
+  const [eventStatusQuickFilter, setEventStatusQuickFilter] = useState<'all' | 'live' | 'upcoming' | 'pending' | 'followed'>('all');
   const [alertQuickFilter, setAlertQuickFilter] = useState<'all' | MobileAlertItem['type']>('all');
   const [acknowledgedAlertIds, setAcknowledgedAlertIds] = useState<string[]>([]);
   const [sharedEventIds, setSharedEventIds] = useState<string[]>([]);
+  const [followedEventIds, setFollowedEventIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
@@ -88,13 +89,17 @@ export default function MapScreen() {
         }
       }
 
+      if (eventStatusQuickFilter === 'followed' && !followedEventIds.includes(event.id)) {
+        return false;
+      }
+
       if (!normalizedSearch) {
         return true;
       }
 
       return event.title.toLowerCase().includes(normalizedSearch) || event.placeName.toLowerCase().includes(normalizedSearch);
     });
-  }, [eventStatusQuickFilter, events, quickFilter, searchTerm]);
+  }, [eventStatusQuickFilter, events, followedEventIds, quickFilter, searchTerm]);
 
   const filteredAlerts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -287,6 +292,16 @@ export default function MapScreen() {
     }
   }
 
+  function toggleFollowSelectedEvent() {
+    if (!selectedEvent) {
+      return;
+    }
+
+    setFollowedEventIds((current) =>
+      current.includes(selectedEvent.id) ? current.filter((eventId) => eventId !== selectedEvent.id) : [...current, selectedEvent.id],
+    );
+  }
+
   function distanceInKm(from: [number, number], to: [number, number]): number {
     const toRad = (degrees: number) => (degrees * Math.PI) / 180;
     const earthKm = 6371;
@@ -326,6 +341,7 @@ export default function MapScreen() {
     quickFilter !== 'all' || eventStatusQuickFilter !== 'all' || alertQuickFilter !== 'all' || searchTerm.trim().length > 0;
   const liveEventsCount = filteredEvents.filter((event) => event.status === 'live').length;
   const highAlertCount = filteredAlerts.filter((alert) => alert.type === 'road_closure').length;
+  const followedEventsCount = followedEventIds.length;
 
   return (
     <View className="flex-1 bg-background">
@@ -399,6 +415,7 @@ export default function MapScreen() {
         </View>
 
         <Text className="text-xs text-foreground">Eventos: {filteredEvents.length}</Text>
+        <Text className="text-xs text-foreground">Seguidos: {followedEventsCount}</Text>
         <Text className="text-xs text-foreground">Alertas: {showAlerts ? filteredAlerts.length : 0}</Text>
         <Text className="text-xs text-muted">
           {isLoading ? 'Sincronizando...' : loadError ? 'Sync con errores' : `Sync OK ${lastSyncAt ? `(${lastSyncAt})` : ''}`}
@@ -471,12 +488,13 @@ export default function MapScreen() {
               { id: 'live', label: 'Activos' },
               { id: 'upcoming', label: 'Proximos' },
               { id: 'pending', label: 'Pendientes' },
+              { id: 'followed', label: 'Seguidos' },
             ].map((item) => {
               const active = eventStatusQuickFilter === item.id;
               return (
                 <Pressable
                   key={item.id}
-                  onPress={() => setEventStatusQuickFilter(item.id as 'all' | 'live' | 'upcoming' | 'pending')}
+                  onPress={() => setEventStatusQuickFilter(item.id as 'all' | 'live' | 'upcoming' | 'pending' | 'followed')}
                   className={`rounded-full px-3 py-1 ${active ? 'bg-emerald-600' : 'bg-gray-100'}`}
                 >
                   <Text className={`text-xs font-medium ${active ? 'text-white' : 'text-foreground'}`}>{item.label}</Text>
@@ -545,6 +563,14 @@ export default function MapScreen() {
 
           {sheetLevel !== 'min' && selectedEvent ? <Text className="mt-3 text-xs text-muted">Inicio: {new Date(selectedEvent.startAt).toLocaleString('es-CO')}</Text> : null}
           {sheetLevel !== 'min' && selectedAlert ? <Text className="mt-3 text-xs text-muted">Reporte activo en esta zona.</Text> : null}
+
+          {selectedEvent ? (
+            <Pressable onPress={toggleFollowSelectedEvent} className="mt-3 self-start rounded-md bg-slate-100 px-2 py-1">
+              <Text className="text-xs font-medium text-slate-800">
+                {followedEventIds.includes(selectedEvent.id) ? 'Dejar de seguir' : 'Seguir evento'}
+              </Text>
+            </Pressable>
+          ) : null}
 
           {sheetLevel === 'full' ? (
             <View className="mt-3 gap-2">
